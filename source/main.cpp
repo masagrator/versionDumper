@@ -2,23 +2,60 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <map>
 
-size_t checkAvailableHeap() {
-	size_t startSize = 200 * 1024 * 1024;
-	void* allocation = malloc(startSize);
-	while (allocation) {
-		free(allocation);
-		startSize += 1024 * 1024;
-		allocation = malloc(startSize);
-	}
-	return startSize - (1024 * 1024);
+void Compare() {
+    std::map<int64_t, int32_t> old_entries;
+    std::map<int64_t, int32_t> new_entries;
+
+    FILE* file = fopen("sdmc:/version_dump_temp.txt", "r");
+    if (!file) {
+        printf("Couldn't find old file!\n");
+        return;
+    }
+    char text[64];
+    fgets(text, 64, file);
+    while (fgets(text, 64, file)) {
+        int64_t titleid = std::strtoll(&text[0], nullptr, 16);
+        int32_t version = std::strtol(&text[50], nullptr, 10);
+        old_entries[titleid] = version;
+    }
+    fclose(file);
+    file = fopen("sdmc:/version_dump.txt", "r");
+    if (!file) {
+        printf("Couldn't find new file!\n");
+        return;
+    }
+    fgets(text, 64, file);
+    size_t found = 0;
+    while (fgets(text, 64, file)) {
+        int64_t titleid = std::strtoll(&text[0], nullptr, 16);
+        int32_t version = std::strtol(&text[50], nullptr, 10);
+        auto it = old_entries.find(titleid);
+        if (it != old_entries.end()) {
+            int32_t old_version = (size_t)it->second;
+            if (version < old_version) {
+                printf("Found older update for %016lX: %d[v%d] -> %d[v%d]\n", titleid, old_version, old_version >> 16, version, version >> 16);
+                found++;
+                consoleUpdate(NULL);
+            }
+            else if (version > old_version) {
+                printf("Found new update for %016lX: %d[v%d] -> %d[v%d]\n", titleid, old_version, old_version >> 16, version, version >> 16);
+                found++;
+                consoleUpdate(NULL);
+            }
+        }
+        else printf("%016lX was added!\n", titleid);
+    }
+    fclose(file);
+    if (found == 0) printf("No new changes in updates were found!\n");
 }
 
-void Test(size_t max_entry_count) {
+void Test() {
 
-    AvmVersionListEntry* entries = new AvmVersionListEntry[max_entry_count];
+    AvmVersionListEntry* entries = new AvmVersionListEntry[65536];
     u32 output_count = 0;
-    Result rc = avmListVersionList(entries, max_entry_count, &output_count);
+    Result rc = avmListVersionList(entries, 65536, &output_count);
     if (R_FAILED(rc)) {
         printf(CONSOLE_RED "avmListVersionList failed: 0x%x.\n" CONSOLE_RESET, rc);
         return;
@@ -37,6 +74,7 @@ void Test(size_t max_entry_count) {
     }
     else printf(CONSOLE_RED "File creation failed!\n" CONSOLE_RESET);
     delete[] entries;
+
     
 }
 
@@ -58,11 +96,16 @@ int main(int argc, char* argv[])
     PadState pad;
     padInitializeDefault(&pad);
 
-    size_t heap_size = checkAvailableHeap();
-    size_t max_entry_count = (heap_size / sizeof(AvmVersionListEntry)) - 1;
-    printf("Available possible entries to dump: %ld\n", max_entry_count);
+    //size_t heap_size = checkAvailableHeap();
+    //size_t max_entry_count = (heap_size / sizeof(AvmVersionListEntry)) - 1;
 
-    printf("Start Y to begin.\n");
+    FILE* file = fopen("sdmc:/version_dump.txt", "r");
+    bool old_file_available = false;
+    if (file) {
+        old_file_available = true;
+        fclose(file);
+    }
+    printf("Press X to dump.\n");
     printf("Press + to exit.\n");
 
     consoleUpdate(NULL);
@@ -79,9 +122,13 @@ int main(int argc, char* argv[])
         // newly pressed in this frame compared to the previous one
         u64 kDown = padGetButtonsDown(&pad);
 
-
-        if (kDown & HidNpadButton_Y) {
-            Test(max_entry_count);
+        if (kDown & HidNpadButton_X) {
+            if (old_file_available) rename("sdmc:/version_dump.txt", "sdmc:/version_dump_temp.txt");
+            Test();
+            if (old_file_available) {
+                Compare();
+                remove("sdmc:/version_dump_temp.txt");
+            }
             printf("Press + to exit.\n");
         }
 
