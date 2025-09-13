@@ -33,7 +33,7 @@ void Compare() {
         int32_t version = std::strtol(&text[50], nullptr, 10);
         auto it = old_entries.find(titleid);
         if (it != old_entries.end()) {
-            int32_t old_version = (size_t)it->second;
+            int32_t old_version = it->second;
             if (version < old_version) {
                 printf("Found older update for %016lX: %d[v%d] -> %d[v%d]\n", titleid, old_version, old_version >> 16, version, version >> 16);
                 found++;
