@@ -126,9 +126,12 @@ int main(int argc, char* argv[])
             if (old_file_available) rename("sdmc:/version_dump.txt", "sdmc:/version_dump_temp.txt");
             Test();
             if (old_file_available) {
+                printf("\n---\n\n");
                 Compare();
                 remove("sdmc:/version_dump_temp.txt");
+                printf("\n---\n\n");
             }
+            printf("File was saved to sdmc:/version_dump.txt\n");
             printf("Press + to exit.\n");
         }
 
