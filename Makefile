@@ -43,7 +43,7 @@ BUILD		:=	build
 SOURCES		:=	source
 #DATA		:=	data
 INCLUDES	:=	include
-APP_VERSION     :=      1.0.2
+APP_VERSION     :=      1.1.0
 APP_AUTHOR      :=      MasaGratoR
 #ROMFS	:=	romfs
 
@@ -62,7 +62,7 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=c++23
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lnx -lm
+LIBS		:= `curl-config --libs` -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
