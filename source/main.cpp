@@ -308,11 +308,13 @@ int main(int argc, char* argv[])
             lblExit();
             screenTurnedOff = true;
             while(true) {
-                svcSleepThread(5llu * 60 * 1000 * 1000 * 1000);
+                rename("sdmc:/version_dump.txt", "sdmc:/version_dump_temp.txt");
                 Test();
                 if (Compare()) {
                     SendIt();
                 }
+                remove("sdmc:/version_dump_temp.txt");
+                svcSleepThread(5llu * 60 * 1000 * 1000 * 1000);
             }
         }
 
