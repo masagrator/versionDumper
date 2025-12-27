@@ -265,7 +265,7 @@ int main(int argc, char* argv[])
     if (old_file_available) {
         printf("Press Y to send it to github.\n");
     }
-    printf("Press - to do automatic scan every 5 minute with turned off screen. No way to exit it without pressing HOME menu.\n");
+    printf("Press - to do automatic scan every 5 minute with turned off screen. No way to exit it without pressing HOME menu. Press - for max 5 seconds to switch between turning off and on screen.\n");
 
     consoleUpdate(NULL);
 
@@ -313,8 +313,25 @@ int main(int argc, char* argv[])
                 if (Compare()) {
                     SendIt();
                 }
+                consoleUpdate(NULL);
                 remove("sdmc:/version_dump_temp.txt");
-                svcSleepThread(5llu * 60 * 1000 * 1000 * 1000);
+                for (size_t i = 0; i < 60; i++) {
+                    svcSleepThread(5000000000);
+                    padUpdate(&pad);
+                    u64 kPressed = padGetButtons(&pad);
+                    if (kPressed & HidNpadButton_Minus) {
+                        lblInitialize();
+                        if (screenTurnedOff) {
+                            lblSwitchBacklightOn(1000);
+                            screenTurnedOff = false;
+                        }
+                        else {
+                            lblSwitchBacklightOff(1000);
+                            screenTurnedOff = true;                        
+                        }
+                        lblExit();
+                    }
+                }
             }
         }
 
