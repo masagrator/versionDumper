@@ -9,4 +9,4 @@ App to run doesn't need to be online, it accesses only data stored offline insid
 Dumped file I'm storing here:
 https://github.com/masagrator/version_dump/blob/main/version_dump.txt
 
-It will be updated randomly since it's not automated.
+It is updated automatically.
